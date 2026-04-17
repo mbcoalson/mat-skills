@@ -1,0 +1,115 @@
+# Known best-practice article sources for harness engineering.
+# Audit mode fetches these and searches for new publications.
+#
+# last_fetched: date this URL was last successfully read and compared
+# status: active (still relevant), superseded (replaced by newer), stale (no longer accessible)
+# key_insights: 1-2 sentence summary of what this source uniquely contributes
+
+sources:
+  - title: "Harness Design for Long-Running Apps"
+    author: "Anthropic"
+    url: "https://www.anthropic.com/engineering/harness-design-long-running-apps"
+    last_fetched: "2026-04-01"
+    status: active
+    key_insights: >
+      Generator-evaluator loop pattern (inspired by GANs). Multi-agent specialization.
+      Concrete grading criteria with few-shot calibration. Active testing over static review.
+      Cost-benefit: 20x cost for proportionally superior output. Strip harness complexity
+      with each model upgrade.
+
+  - title: "Effective Harnesses for Long-Running Agents"
+    author: "Anthropic"
+    url: "https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents"
+    last_fetched: "2026-04-01"
+    status: active
+    key_insights: >
+      Two-agent architecture (initializer + coding agent). JSON over markdown for state.
+      Feature-first decomposition (200+ items in JSON, one per session). Browser-based
+      testing required for real bug detection. Session boundaries are absolute — build
+      explicit handoff mechanisms.
+
+  - title: "Harness Engineering: Leveraging Codex in an Agent-First World"
+    author: "OpenAI (Ryan Lopopolo)"
+    url: "https://openai.com/index/harness-engineering/"
+    last_fetched: "2026-04-01"
+    status: active
+    key_insights: >
+      Progressive disclosure: AGENTS.md as table of contents, not encyclopedia.
+      Repository knowledge as system of record — if it's not in the repo, it doesn't
+      exist for the agent. Mechanical invariant enforcement via custom linters.
+      Entropy management: recurring cleanup agents as "garbage collection."
+      Throughput changes merge philosophy — corrections are cheap, waiting is expensive.
+
+  - title: "Ralph Wiggum as a Software Engineer"
+    author: "Geoffrey Huntley"
+    url: "https://ghuntley.com/ralph/"
+    last_fetched: "2026-04-01"
+    status: active
+    key_insights: >
+      The Ralph loop: fresh context, one task per iteration, bash loop as orchestrator.
+      Context effectiveness clips around 147-152k tokens despite advertised 200k.
+      Compilation and type checking as immediate backpressure. Non-deterministic failures
+      from code search — counter with explicit "search before assuming not implemented."
+      Senior engineering judgment still required for direction and rescue decisions.
+
+  - title: "Demystifying evals for AI agents"
+    author: "Anthropic"
+    url: "https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents"
+    last_fetched: "2026-04-03"
+    status: active
+    key_insights: >
+      Start with 20-50 tasks drawn from real failures. Single-case eval measures
+      memorization; multi-case proves generalization. Multi-turn evals increasingly
+      necessary as agent capabilities grow. Real-world examples from Descript and Bolt.
+
+  - title: "Harness engineering for coding agent users"
+    author: "Martin Fowler"
+    url: "https://martinfowler.com/articles/harness-engineering.html"
+    last_fetched: "2026-04-03"
+    status: active
+    key_insights: >
+      Introduces guides (feedforward controls that steer before action) vs sensors
+      (feedback controls that observe after action). Computational sensors are cheap,
+      proven, and deterministic — catch structural issues reliably. Maps to our
+      generator-self-validation (guide) vs scorer (sensor) pattern.
+
+  - title: "Quantifying infrastructure noise in agentic coding evals"
+    author: "Anthropic"
+    url: "https://www.anthropic.com/engineering/infrastructure-noise"
+    last_fetched: "2026-04-03"
+    status: active
+    key_insights: >
+      Infrastructure noise (environment, timing, tool availability) can mask real
+      quality changes in eval scores. Relevant to scorer threshold calibration —
+      TF-IDF similarity thresholds may need per-reference tuning.
+
+  - title: "Context Engineering for Coding Agents"
+    author: "Martin Fowler"
+    url: "https://martinfowler.com/articles/exploring-gen-ai/context-engineering-coding-agents.html"
+    last_fetched: "2026-04-03"
+    status: active
+    key_insights: >
+      Reinforces progressive disclosure — AGENTS.md as index, not encyclopedia.
+      Context engineering is the discipline; harness engineering is a specific form.
+
+# --- Search Terms for Finding New Articles ---
+# Audit mode uses these to search for new publications.
+search_terms:
+  - "AI agent harness engineering"
+  - "Claude Code eval loop best practices"
+  - "LLM agent evaluation framework"
+  - "coding agent overnight automation"
+  - "AI agent scaffolding patterns"
+  - "agentic software engineering workflow"
+
+# --- Audit History ---
+# Updated each time audit mode runs.
+audit_log:
+  - date: "2026-04-01"
+    action: "initial_creation"
+    articles_checked: 4
+    new_insights: "None — initial curation from all four sources"
+  - date: "2026-04-03"
+    action: "mv_harness_audit"
+    articles_checked: 8
+    new_insights: "Added 4 new sources — Fowler's guide/sensor taxonomy, Anthropic's multi-case eval recommendation and infrastructure noise article, Fowler's context engineering framing"

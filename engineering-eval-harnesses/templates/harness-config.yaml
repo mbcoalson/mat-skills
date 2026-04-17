@@ -1,0 +1,105 @@
+# Harness Configuration Template
+# ================================================
+# Customize this for your domain. This file defines the eval harness's
+# scoring dimensions, agent config, paths, and stop conditions.
+#
+# Usage: Copy this file into your harness directory and replace
+# placeholders with domain-specific values.
+#
+# For initial STATE.json, see the schema block at the bottom of this file.
+# STATE.json is the persistent memory across iterations — the orchestrator
+# reads it to decide current state and when to stop.
+
+schema:
+  # --- Identity ---
+  plugin: "{plugin_name}"           # e.g., "mv-report-automation"
+  domain: "{domain_description}"    # e.g., "FEMP 5.0 M&V annual reports"
+  output_format: "{format}"         # e.g., "docx", "xlsx", "json", "pdf"
+
+  # --- Scoring Dimensions ---
+  # Define 2-5 orthogonal dimensions. Each dimension gets:
+  #   - name: machine-readable key
+  #   - description: what it measures (for the Analyzer prompt)
+  #   - weight: contribution to composite (must sum to 1.0)
+  #   - target: minimum acceptable score (0.0-1.0)
+  #   - hard_fail_threshold: below this = automatic fail (optional)
+  dimensions:
+    - name: "{dimension_1}"         # e.g., "data_accuracy"
+      description: "{what_it_measures}"
+      weight: 0.40
+      target: 0.95
+      hard_fail_threshold: null     # Set if this dimension is non-negotiable
+    - name: "{dimension_2}"         # e.g., "content_completeness"
+      description: "{what_it_measures}"
+      weight: 0.30
+      target: 0.90
+    - name: "{dimension_3}"         # e.g., "structural_fidelity"
+      description: "{what_it_measures}"
+      weight: 0.20
+      target: 0.85
+    # Add more as needed. 2-5 dimensions is the sweet spot.
+
+  # --- Stop Conditions ---
+  # These override the overnight framework defaults when specified.
+  threshold: 0.90                   # Composite score to reach
+  consecutive_passes: 3             # Must hit threshold N times in a row
+  max_runs: 20                      # Safety cap
+  stall_threshold: 4                # Stop after N iterations with no improvement
+
+  # --- Environment ---
+  # Detected during scaffolding. Used to render {python_path} in agent prompts.
+  python_path: "{python_path}"       # Auto-detected — see SKILL.md Phase 2
+
+  # --- Paths ---
+  # All paths relative to the run directory unless noted.
+  paths:
+    source_dir: "{path_to_source_documents}"
+    reference: "{path_to_reference_output}"   # Scorer + Analyzer see this
+    plugin_root: "{path_to_plugin}"
+    output_dir: "output/"                     # Where generator writes output
+    scorer: "scorer_{domain}.py"
+    generator_prompt: "generator_prompt.md"
+    analyzer_prompt: "analyzer_prompt.md"
+
+  # --- Agent Config ---
+  generator:
+    model: "{generator_model}"      # e.g., a cost-effective generation model (claude-sonnet-4-6)
+    allowed_tools: "Bash,Read,Write,Edit,Glob,Grep"
+  analyzer:
+    model: "{analyzer_model}"       # e.g., a higher-reasoning analysis model (claude-opus-4-6)
+    allowed_tools: "Bash,Read,Write,Edit,Glob,Grep"
+  context_reviewer:                 # Optional — cheap triage between scorer and analyzer
+    enabled: false                  # Enable for Standard/Heavy harnesses
+    model: "{context_reviewer_model}" # e.g., a low-cost review model (claude-haiku-4-5-20251001)
+    allowed_tools: "Bash,Read,Write,Edit,Glob,Grep"
+
+  # --- Regression Handling ---
+  regression:
+    max_dimension_drop: 0.05        # 5% circuit breaker per dimension
+    revert_strategy: "git_revert"   # or "snapshot_restore" for complex cases
+    max_failures_per_target: 3      # 3-strike rule for change deduplication
+
+  # --- Exclusions ---
+  # Items reported but not scored. Prevents penalizing the generator
+  # for content it can't be expected to produce.
+  exclusions:
+    - type: "{exclusion_type}"      # e.g., "judgment_sections"
+      description: "{why_excluded}"
+      pattern: "{detection_pattern}" # e.g., "[REVIEW REQUIRED]"
+
+  # --- Cooldown ---
+  cooldown_minutes: 5               # Between runs (rate limit protection)
+  retry_backoff_minutes: 15         # After failure
+
+# --- Initial STATE.json ---
+# Copy this block as your starting STATE.json:
+#
+# {
+#   "iteration": 0,
+#   "status": "pending",
+#   "scores": {},
+#   "best_composite": 0.0,
+#   "consecutive_passes": 0,
+#   "change_log": [],
+#   "failed_approaches": []
+# }

@@ -1,0 +1,54 @@
+# Harness Adapter Template — Bridges eval harness to Refinery
+# ============================================================
+# When a plugin has both an eval harness (automated quality loop)
+# and refinery integration (production feedback), this adapter
+# connects them so corrections from real users inform the next
+# eval cycle.
+#
+# Place this file in the plugin root alongside the existing
+# refinery-adapter.yaml (if present).
+#
+# Why bridge them: The eval harness measures "does the pipeline
+# meet a quality bar?" Refinery captures "what do real users
+# actually correct?" Combining both prevents the eval from
+# optimizing for the wrong quality signal.
+
+plugin: "{plugin_name}"
+domain: "{domain_description}"
+
+# --- Eval Harness Connection ---
+eval:
+  scorer_path: "eval/scorer_{domain}.py"
+  config_path: "eval/harness-config.yaml"   # or STATE.json schema
+  output_dir: "eval/output/"
+  reference_dir: "eval/reference/"
+
+# --- Refinery Connection ---
+# IMPORTANT: Verify these paths against your plugin's actual refinery-adapter.yaml
+# before use. Default paths shown assume the standard refinery convention.
+refinery:
+  corrections_path: ".refinery/corrections.jsonl"
+  changelog_path: ".refinery/changelog.yaml"
+  feedback_categories:
+    # Map refinery correction categories to eval scoring dimensions.
+    # This lets the Analyzer prioritize fixes that address real user pain.
+    - refinery_category: "accuracy"
+      eval_dimension: "{dimension_1}"       # e.g., "data_accuracy"
+    - refinery_category: "completeness"
+      eval_dimension: "{dimension_2}"       # e.g., "content_completeness"
+    - refinery_category: "formatting"
+      eval_dimension: "{dimension_3}"       # e.g., "formatting_quality"
+
+# --- Feedback Loop ---
+# How refinery corrections influence the eval harness:
+#
+# 1. After a refinery feedback review cycle, corrections with 3+ occurrences
+#    are flagged as systematic issues.
+# 2. The Analyzer prompt includes these flagged corrections alongside the
+#    score report, weighted by occurrence count.
+# 3. The eval scorer can optionally add bonus/penalty for patterns that
+#    refinery flagged (future enhancement — not in initial implementation).
+feedback_integration:
+  min_occurrences_for_flag: 3
+  include_in_analyzer_prompt: true
+  scorer_bonus_penalty: false  # Future: adjust scores based on refinery signals

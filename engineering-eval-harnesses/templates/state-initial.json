@@ -1,0 +1,18 @@
+{
+  "_comment": "Initial STATE.json for overnight framework eval runs. Customize dimension keys to match your harness-config.yaml scoring dimensions.",
+  "iteration": 0,
+  "status": "pending",
+  "target": "{plugin_name}",
+  "type": "plugin",
+  "scores": {
+    "_comment": "Add one key per scoring dimension from harness-config.yaml",
+    "dimension_1": 0.0,
+    "dimension_2": 0.0,
+    "dimension_3": 0.0,
+    "composite": 0.0
+  },
+  "best_composite": 0.0,
+  "consecutive_passes": 0,
+  "failed_approaches": [],
+  "change_log": []
+}

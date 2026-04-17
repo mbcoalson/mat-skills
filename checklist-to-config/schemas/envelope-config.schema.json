@@ -1,0 +1,295 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "envelope-config.schema.json",
+  "title": "Envelope Config",
+  "description": "JSON schema for the envelope section of the checklist-to-config workflow. All thermal values in SI units.",
+  "type": "object",
+  "required": ["metadata", "envelope"],
+  "properties": {
+    "metadata": {
+      "type": "object",
+      "required": ["project_name", "climate_zone", "building_type", "config_version", "units"],
+      "properties": {
+        "project_name": { "type": "string", "minLength": 1 },
+        "project_number": { "type": ["string", "null"] },
+        "climate_zone": {
+          "type": "string",
+          "pattern": "^[1-8][A-C]?$",
+          "description": "ASHRAE climate zone (e.g., 5B, 4A, 3C)"
+        },
+        "building_type": { "type": "string", "minLength": 1 },
+        "config_version": { "type": "string" },
+        "source_checklist": { "type": ["string", "null"] },
+        "generated_date": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+        },
+        "units": { "type": "string", "const": "SI" },
+        "notes": { "type": ["string", "null"] }
+      }
+    },
+    "envelope": {
+      "type": "object",
+      "required": ["roof", "walls_above_grade", "fenestration", "infiltration"],
+      "properties": {
+        "roof": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/opaqueAssembly" }
+        },
+        "walls_above_grade": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/opaqueAssembly" }
+        },
+        "walls_below_grade": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/belowGradeAssembly" }
+        },
+        "floors": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/opaqueAssembly" }
+        },
+        "slab_on_grade": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/slabAssembly" }
+        },
+        "fenestration": { "$ref": "#/$defs/fenestration" },
+        "doors": { "$ref": "#/$defs/doors" },
+        "infiltration": { "$ref": "#/$defs/infiltration" }
+      }
+    }
+  },
+  "$defs": {
+    "status": {
+      "type": "string",
+      "enum": ["verified", "tbd", "flagged"]
+    },
+    "materialLayer": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "thickness_m": {
+          "type": ["number", "null"],
+          "minimum": 0.0001,
+          "maximum": 2.0,
+          "description": "Layer thickness in meters"
+        },
+        "conductivity": {
+          "type": ["number", "null"],
+          "exclusiveMinimum": 0,
+          "maximum": 500,
+          "description": "Thermal conductivity in W/m-K"
+        },
+        "density": {
+          "type": ["number", "null"],
+          "exclusiveMinimum": 0,
+          "maximum": 25000,
+          "description": "Density in kg/m3"
+        },
+        "specific_heat": {
+          "type": ["number", "null"],
+          "exclusiveMinimum": 0,
+          "maximum": 10000,
+          "description": "Specific heat in J/kg-K"
+        },
+        "thermal_resistance_si": {
+          "type": ["number", "null"],
+          "exclusiveMinimum": 0,
+          "maximum": 20,
+          "description": "Thermal resistance in m2-K/W (for air gaps only)"
+        }
+      },
+      "description": "A material layer. Standard layers require thickness_m, conductivity, density, specific_heat. Air gaps require thermal_resistance_si instead."
+    },
+    "opaqueAssembly": {
+      "type": "object",
+      "required": ["id", "type", "u_factor_si", "layers", "apply_to", "status"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9_]+$" },
+        "type": { "type": "string" },
+        "u_factor_si": {
+          "type": ["number", "null"],
+          "description": "Assembly U-factor in W/m2-K"
+        },
+        "u_factor_ip": {
+          "type": ["number", "null"],
+          "description": "Assembly U-factor in Btu/h-ft2-F (metadata)"
+        },
+        "r_value_ip": {
+          "type": ["number", "null"],
+          "description": "Assembly R-value in h-ft2-F/Btu (metadata)"
+        },
+        "layers": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/materialLayer" }
+        },
+        "apply_to": { "type": "string" },
+        "status": { "$ref": "#/$defs/status" },
+        "note": { "type": ["string", "null"] },
+        "flag": { "type": ["string", "null"] }
+      }
+    },
+    "belowGradeAssembly": {
+      "type": "object",
+      "required": ["id", "type", "apply_to", "status"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9_]+$" },
+        "type": { "type": "string" },
+        "c_factor_si": {
+          "type": ["number", "null"],
+          "description": "C-factor in W/m2-K"
+        },
+        "c_factor_ip": {
+          "type": ["number", "null"],
+          "description": "C-factor in Btu/h-ft2-F (metadata)"
+        },
+        "layers": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/materialLayer" }
+        },
+        "apply_to": { "type": "string" },
+        "status": { "$ref": "#/$defs/status" },
+        "note": { "type": ["string", "null"] }
+      }
+    },
+    "slabAssembly": {
+      "type": "object",
+      "required": ["id", "type", "apply_to", "status"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9_]+$" },
+        "type": { "type": "string" },
+        "f_factor_si": {
+          "type": ["number", "null"],
+          "description": "F-factor in W/m-K"
+        },
+        "f_factor_ip": {
+          "type": ["number", "null"],
+          "description": "F-factor in Btu/h-ft-F (metadata)"
+        },
+        "insulation_r_ip": {
+          "type": ["number", "null"],
+          "description": "Perimeter insulation R-value in h-ft2-F/Btu"
+        },
+        "insulation_depth_in": {
+          "type": ["number", "null"],
+          "description": "Insulation depth in inches"
+        },
+        "apply_to": { "type": "string" },
+        "status": { "$ref": "#/$defs/status" },
+        "note": { "type": ["string", "null"] }
+      }
+    },
+    "fenestration": {
+      "type": "object",
+      "required": ["vertical_glazing"],
+      "properties": {
+        "vertical_glazing": {
+          "type": "object",
+          "required": ["u_factor_si", "shgc", "apply_to", "status"],
+          "properties": {
+            "u_factor_si": {
+              "type": ["number", "null"],
+              "description": "U-factor in W/m2-K"
+            },
+            "u_factor_ip": {
+              "type": ["number", "null"],
+              "description": "U-factor in Btu/h-ft2-F (metadata)"
+            },
+            "shgc": {
+              "type": ["number", "null"],
+              "minimum": 0,
+              "maximum": 1,
+              "description": "Solar Heat Gain Coefficient"
+            },
+            "vt": {
+              "type": ["number", "null"],
+              "minimum": 0,
+              "maximum": 1,
+              "description": "Visible Transmittance"
+            },
+            "frame_type": { "type": ["string", "null"] },
+            "apply_to": { "type": "string" },
+            "status": { "$ref": "#/$defs/status" },
+            "flag": { "type": ["string", "null"] }
+          }
+        },
+        "wwr_by_orientation": {
+          "type": "object",
+          "properties": {
+            "north": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+            "east": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+            "south": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+            "west": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+            "note": { "type": ["string", "null"] }
+          }
+        }
+      }
+    },
+    "doors": {
+      "type": "object",
+      "properties": {
+        "swinging": {
+          "type": "object",
+          "required": ["u_factor_si", "apply_to", "status"],
+          "properties": {
+            "u_factor_si": {
+              "type": ["number", "null"],
+              "description": "U-factor in W/m2-K"
+            },
+            "u_factor_ip": {
+              "type": ["number", "null"],
+              "description": "U-factor in Btu/h-ft2-F (metadata)"
+            },
+            "layers": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/materialLayer" }
+            },
+            "apply_to": { "type": "string" },
+            "status": { "$ref": "#/$defs/status" }
+          }
+        },
+        "nonswinging": {
+          "type": "object",
+          "required": ["u_factor_si", "apply_to", "status"],
+          "properties": {
+            "u_factor_si": {
+              "type": ["number", "null"],
+              "description": "U-factor in W/m2-K"
+            },
+            "u_factor_ip": {
+              "type": ["number", "null"],
+              "description": "U-factor in Btu/h-ft2-F (metadata)"
+            },
+            "layers": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/materialLayer" }
+            },
+            "apply_to": { "type": "string" },
+            "status": { "$ref": "#/$defs/status" }
+          }
+        }
+      }
+    },
+    "infiltration": {
+      "type": "object",
+      "required": ["rate_si", "os_method", "apply_to", "status"],
+      "properties": {
+        "rate_si": {
+          "type": ["number", "null"],
+          "description": "Infiltration rate in m3/s-m2"
+        },
+        "rate_ip": {
+          "type": ["number", "null"],
+          "description": "Infiltration rate in cfm/ft2 (metadata)"
+        },
+        "rate_units": { "type": "string" },
+        "os_method": {
+          "type": "string",
+          "description": "OpenStudio infiltration calculation method"
+        },
+        "apply_to": { "type": "string" },
+        "status": { "$ref": "#/$defs/status" }
+      }
+    }
+  }
+}
