@@ -152,17 +152,35 @@ def primary_article_exists(target: str) -> str | None:
     return None
 
 
-def topic_hub_exists(target: str) -> str | None:
+def _topic_base_kebabs(target: str) -> list[str]:
     """
-    Return a posix relative path if a topic hub exists for this target under
-    the (Topic) naming convention: wiki/topics/<kebab>-topic.md.
+    Return candidate base kebabs for probing a topic hub file.
+
+    Supports both plain targets (``[[Foo]]`` -> ``foo``) and already-suffixed
+    targets (``[[Foo (Topic)]]`` -> ``foo-topic``). The latter would otherwise
+    produce ``foo-topic-topic.md`` and miss the hub.
     """
     kebab = target_to_kebab(target)
     if not kebab:
-        return None
-    candidate = TOPICS_DIR / f"{kebab}-topic.md"
-    if candidate.exists():
-        return posix_rel(candidate)
+        return []
+    candidates = [kebab]
+    if kebab.endswith("-topic"):
+        base = kebab[: -len("-topic")]
+        if base:
+            candidates.insert(0, base)
+    return candidates
+
+
+def topic_hub_exists(target: str) -> str | None:
+    """
+    Return a posix relative path if a topic hub exists for this target under
+    the (Topic) naming convention: wiki/topics/<kebab>-topic.md. Tolerates
+    both ``[[Foo]]`` and ``[[Foo (Topic)]]`` link forms.
+    """
+    for base in _topic_base_kebabs(target):
+        candidate = TOPICS_DIR / f"{base}-topic.md"
+        if candidate.exists():
+            return posix_rel(candidate)
     return None
 
 
@@ -210,9 +228,10 @@ def _render_proposal(target: str, ref_count: int, referring: list[str]) -> str:
         "## Referring articles\n\n"
         f"{bullets}\n\n"
         "## Review instructions\n\n"
-        "Change the `status:` frontmatter value to `approved` to have the\n"
-        "topic hub generated on the next run of `generate_approved_hubs.py`,\n"
-        "or to `rejected` to suppress this target from future proposals.\n"
+        "Change the `status:` frontmatter value to `approved` to mark this\n"
+        "proposal as accepted, or to `rejected` to suppress this target from\n"
+        "future proposals. Create the actual topic hub article at the path\n"
+        "shown in `proposed_filename` when you're ready.\n"
     )
 
 

@@ -214,7 +214,10 @@ def load_state() -> dict:
             return json.load(fh)
     return {
         "harness": "wiki-compiler",
-        "valid_types": ["skill", "plugin", "concept"],
+        "valid_types": [
+            "skill", "plugin", "concept", "topic",
+            "project", "opportunity", "process", "reference",
+        ],
         "hub_threshold": 3,
         "score_threshold": 90,
         "hub_candidates": {},
@@ -226,9 +229,13 @@ def load_state() -> dict:
 # Tag vocabulary loader
 # ---------------------------------------------------------------------------
 
-def load_valid_tags() -> set[str]:
+def load_valid_tags() -> set[str] | None:
     """
     Parse wiki/tags.md for valid tag names.
+
+    Returns None if wiki/tags.md does not exist, signaling that the
+    vocabulary check should be skipped entirely. Returns a (possibly empty)
+    set if the file exists.
 
     Rules:
       - Skip lines starting with '#' (comments) and blank lines.
@@ -236,7 +243,7 @@ def load_valid_tags() -> set[str]:
       - Strip whitespace — the result is the tag name.
     """
     if not TAGS_PATH.exists():
-        return set()
+        return None
 
     valid: set[str] = set()
     for line in TAGS_PATH.read_text(encoding="utf-8").splitlines():
@@ -369,18 +376,23 @@ def check_summary_quality(fm: dict) -> list[str]:
     return reasons
 
 
-def check_tag_hygiene(fm: dict, valid_tags: set[str]) -> list[str]:
+def check_tag_hygiene(fm: dict, valid_tags: set[str] | None) -> list[str]:
     """
     Check tags:
       - All lowercase
       - No duplicates per article
-      - Every tag exists in wiki/tags.md
+      - Every tag exists in wiki/tags.md (skipped when valid_tags is None,
+        i.e. wiki/tags.md is absent)
     """
     reasons = []
 
     tags_raw = fm.get("tags", [])
     if isinstance(tags_raw, str):
         tags_raw = [tags_raw]
+
+    valid_tags_lower: set[str] | None = (
+        {t.lower() for t in valid_tags} if valid_tags is not None else None
+    )
 
     seen = set()
     for tag in tags_raw:
@@ -394,8 +406,8 @@ def check_tag_hygiene(fm: dict, valid_tags: set[str]) -> list[str]:
             reasons.append(f"duplicate tag '{lower_tag}'")
         seen.add(lower_tag)
 
-        # Vocabulary check (compare lowercase)
-        if tag.lower() not in {t.lower() for t in valid_tags}:
+        # Vocabulary check — only when wiki/tags.md was present
+        if valid_tags_lower is not None and lower_tag not in valid_tags_lower:
             reasons.append(f"tag '{tag}' not found in wiki/tags.md")
 
     return reasons
@@ -463,6 +475,25 @@ def check_link_resolution(md_files: list[Path]) -> list[dict]:
 _HUB_PRIMARY_DIRS = ["skills", "plugins", "projects", "opportunities", "processes", "references"]
 
 
+def _topic_base_kebabs(target: str) -> list[str]:
+    """
+    Return candidate base kebabs for probing a topic hub file.
+
+    Supports both plain targets (``[[Foo]]`` -> ``foo``) and already-suffixed
+    targets (``[[Foo (Topic)]]`` -> ``foo-topic``). The latter would
+    otherwise produce ``foo-topic-topic.md`` and miss the hub.
+    """
+    kebab = target_to_kebab(target)
+    if not kebab:
+        return []
+    candidates = [kebab]
+    if kebab.endswith("-topic"):
+        base = kebab[: -len("-topic")]
+        if base:
+            candidates.insert(0, base)
+    return candidates
+
+
 def _hub_satisfied(target: str) -> tuple[bool, str | None]:
     """
     Return (True, rel_path) if any canonical location holds a file for this
@@ -476,9 +507,10 @@ def _hub_satisfied(target: str) -> tuple[bool, str | None]:
         candidate = WIKI_ROOT / d / f"{kebab}.md"
         if candidate.exists():
             return True, f"{d}/{kebab}.md"
-    topic_candidate = WIKI_ROOT / "topics" / f"{kebab}-topic.md"
-    if topic_candidate.exists():
-        return True, f"topics/{kebab}-topic.md"
+    for base in _topic_base_kebabs(target):
+        topic_candidate = WIKI_ROOT / "topics" / f"{base}-topic.md"
+        if topic_candidate.exists():
+            return True, f"topics/{base}-topic.md"
     concept_candidate = WIKI_ROOT / "concepts" / f"{kebab}.md"
     if concept_candidate.exists():
         return True, f"concepts/{kebab}.md"

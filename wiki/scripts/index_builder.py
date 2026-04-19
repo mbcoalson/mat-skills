@@ -180,6 +180,15 @@ def collect_articles() -> list[dict]:
     return articles
 
 
+def _escape_cell(value: str) -> str:
+    """
+    Escape a value for safe inclusion inside a markdown table cell.
+    Replaces literal pipes with ``\\|`` and collapses newlines to a space
+    so multi-line strings don't break row rendering.
+    """
+    return str(value).replace("\\", "\\\\").replace("|", "\\|").replace("\n", " ")
+
+
 def build_index(articles: list[dict]) -> str:
     header = (
         "# Wiki Index\n\n"
@@ -189,7 +198,11 @@ def build_index(articles: list[dict]) -> str:
 
     rows = []
     for a in articles:
-        row = f"| [[{a['title']}]] | {a['type']} | {a['tags']} | {a['summary']} |"
+        title   = _escape_cell(a["title"])
+        art_typ = _escape_cell(a["type"])
+        tags    = _escape_cell(a["tags"])
+        summary = _escape_cell(a["summary"])
+        row = f"| [[{title}]] | {art_typ} | {tags} | {summary} |"
         rows.append(row)
 
     if rows:
