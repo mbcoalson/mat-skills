@@ -1,6 +1,6 @@
 ---
 name: wiki
-description: Use when searching for information across Mat's workspace, when compiling new knowledge into the wiki, or when running wiki maintenance. Provides a token-efficient search protocol (index → frontmatter → full read), an ingest protocol for filing session learnings back into the wiki, and a maintenance protocol for running the scorer and fixing issues. Trigger keywords: wiki, search workspace, find skill, knowledge base, obsidian, second brain.
+description: Use when searching for information across your Claude Code workspace, when compiling new knowledge into the wiki, or when running wiki maintenance. Provides a token-efficient search protocol (index → frontmatter → full read), an ingest protocol for filing session learnings back into the wiki, and a maintenance protocol for running the scorer and fixing issues. Trigger keywords: wiki, search workspace, find skill, knowledge base, obsidian, second brain.
 ---
 
 ## Search Protocol
