@@ -1,6 +1,6 @@
 ---
 name: wiki
-description: Use when searching for information across Mat's workspace, when compiling new knowledge into the wiki, or when running wiki maintenance. Provides a token-efficient search protocol (index → frontmatter → full read), an ingest protocol for filing session learnings back into the wiki, and a maintenance protocol for running the scorer and fixing issues. Trigger keywords: wiki, search workspace, find skill, knowledge base, obsidian, second brain.
+description: Use when searching for information across your Claude Code workspace, when compiling new knowledge into the wiki, or when running wiki maintenance. Provides a token-efficient search protocol (index → frontmatter → full read), an ingest protocol for filing session learnings back into the wiki, and a maintenance protocol for running the scorer and fixing issues. Trigger keywords: wiki, search workspace, find skill, knowledge base, obsidian, second brain.
 ---
 
 ## Search Protocol
@@ -46,7 +46,7 @@ When a session produces reusable knowledge that should be filed into the wiki:
 
 4. Run index_builder.py to update the index:
    ```
-   C:/Users/mcoalson/AppData/Local/Programs/Python/Python312/python.exe wiki/harness/index_builder.py
+   python wiki/scripts/index_builder.py
    ```
 
 5. Append an entry to `wiki/log.md`:
@@ -63,17 +63,21 @@ Run on demand when the wiki needs a health check.
 
 1. Run the scorer for full validation:
    ```
-   C:/Users/mcoalson/AppData/Local/Programs/Python/Python312/python.exe wiki/harness/scorer_wiki.py --post-all
+   python wiki/scripts/scorer_wiki.py --post-all
    ```
 
-2. Read `wiki/harness/score_report.json` for failures.
+2. Read `wiki/scripts/score_report.json` for failures.
 
 3. Fix interactively or queue for an overnight analyzer run.
 
 4. Run hub_detector to check for new concept candidates:
    ```
-   C:/Users/mcoalson/AppData/Local/Programs/Python/Python312/python.exe wiki/harness/hub_detector.py
+   python wiki/scripts/hub_detector.py
    ```
+   This emits proposal files to `wiki/scripts/hub-proposals/` rather than
+   writing articles directly. Review each proposal and change its `status`
+   frontmatter to `approved` or `rejected` before creating the actual
+   topic article.
 
 ---
 

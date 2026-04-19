@@ -29,8 +29,23 @@ LLMs excel at the bookkeeping work humans avoid, so you can hand them the mainte
 Karpathy's gist describes the pattern. This implementation:
 - Targets **Claude Code workspaces specifically** — skills, plugins, project folders under `User-Files/`.
 - Outputs to **Obsidian vault format** (`[[wikilinks]]`, frontmatter, graph view, tag pane).
-- Ships with a **batched orchestrator** (`orchestrate_wiki.py`) that runs Claude in pipe mode per batch to stay under context limits.
-- Includes **automated scorer** (`wiki/harness/`) for lint-mode health-checks.
+- Ships with three deterministic maintenance scripts in [`scripts/`](scripts/):
+  - `index_builder.py` — walks wiki subdirectories and rebuilds `wiki/index.md`.
+  - `scorer_wiki.py` — scores articles against frontmatter, link, tag, and cross-reference rules; writes `score_report.json`.
+  - `hub_detector.py` — counts wikilink references and emits proposal files for concepts that show up often enough to deserve their own article.
+- Scripts are stdlib-only Python 3.10+ (no pip install needed).
+
+## Bootstrap
+
+To stand up a new wiki from this skill:
+
+1. Create the directory scaffold — any of: `wiki/skills/`, `wiki/plugins/`, `wiki/concepts/`, `wiki/topics/`, `wiki/projects/`, `wiki/opportunities/`, `wiki/processes/`, `wiki/references/` (create the ones you'll use).
+2. Create `wiki/tags.md` with one tag per line (lines starting with `#` are comments). The scorer's `tag_hygiene` check uses this as the tag vocabulary.
+3. Write your first article following the frontmatter schema in `SKILL.md`.
+4. Run `python wiki/scripts/index_builder.py` to build `wiki/index.md`.
+5. Run `python wiki/scripts/scorer_wiki.py --post-all` to verify health.
+
+`STATE.json` is created automatically with sensible defaults on first run.
 
 ## Credit
 
